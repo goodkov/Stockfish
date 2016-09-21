@@ -948,12 +948,12 @@ moves_loop: // When in check search starts from here
                   continue;
 
               // Prune moves with negative SEE
-              if (   lmrDepth < 8
-                  && pos.see_sign(move) < Value(-35 * lmrDepth * lmrDepth))
+              if (   lmrDepth < 10
+                  && pos.see_sign(move) < Value(-30 * lmrDepth * lmrDepth))
                   continue;
           }
-          else if (   depth < 7 * ONE_PLY
-                   && pos.see_sign(move) < Value(-35 * depth / ONE_PLY * depth / ONE_PLY))
+          else if (   depth < 10 * ONE_PLY
+                   && pos.see_sign(move) < Value(-30 * depth / ONE_PLY * depth / ONE_PLY))
                   continue;
       }
 
