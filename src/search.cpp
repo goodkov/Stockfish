@@ -944,13 +944,15 @@ moves_loop: // When in check search starts from here
                   continue;
 
               // Prune moves with negative SEE
-              if (   lmrDepth < 8
-                  && !pos.see_ge(move, Value(-35 * lmrDepth * lmrDepth)))
+              int vv = pos.pieces(pos.side_to_move(), QUEEN)?35:(pos.count<ROOK>(pos.side_to_move())>1?31:28);
+              if (   lmrDepth < 15
+                  && !pos.see_ge(move, Value(-vv * lmrDepth * lmrDepth)))
                   continue;
           }
-          else if (depth < 7 * ONE_PLY && !extension)
+          else if (depth < 14 * ONE_PLY && !extension)
           {
-              Value v = Value(-35 * depth / ONE_PLY * depth / ONE_PLY);
+              int vv = pos.pieces(pos.side_to_move(), QUEEN)?35:(pos.count<ROOK>(pos.side_to_move())>1?31:28);
+              Value v = Value(-vv * depth / ONE_PLY * depth / ONE_PLY);
               if (ss->staticEval != VALUE_NONE)
                   v += ss->staticEval - alpha - 200;
 
