@@ -947,7 +947,7 @@ moves_loop: // When in check search starts from here
               if (lmrDepth < 8)
               {
                   Value v = Value(-35 * lmrDepth * lmrDepth);
-                  if (!pos.see_ge2(move, v, v+(pos.pieces(pos.side_to_move(), QUEEN)?0:250)))
+                  if (!pos.see_ge2(move, v+(pos.pieces(pos.side_to_move(), QUEEN)?0:250), v+250))
                       continue;
               }
           }
@@ -956,7 +956,7 @@ moves_loop: // When in check search starts from here
               Value v = Value(-35 * depth / ONE_PLY * depth / ONE_PLY);
               if (ss->staticEval != VALUE_NONE)
                   v += ss->staticEval - alpha - 200;
-              if (!pos.see_ge2(move, v, v+(pos.pieces(pos.side_to_move(), QUEEN)?0:250)))
+              if (!pos.see_ge2(move, v+(pos.pieces(pos.side_to_move(), QUEEN)?0:250), v+250))
                   continue;
           }
       }
