@@ -1065,7 +1065,7 @@ bool Position::see_ge2(Move m, Value v1, Value v2) const {
       if (nextVictim == KING)
           return relativeStm == bool(attackers & pieces(~stm));
 
-      if (nextVictim == QUEEN)
+      if (relativeStm)
       {
           balance += PieceValue[MG][nextVictim];
       }
