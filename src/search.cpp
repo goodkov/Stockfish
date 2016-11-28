@@ -947,7 +947,7 @@ moves_loop: // When in check search starts from here
               if (lmrDepth < 11)
               {
                   int vv = (pos.pieces(pos.side_to_move(), QUEEN)|type_of(moved_piece)==QUEEN)?35:30;
-                  if (!pos.see_ge2(move, Value(-vv * lmrDepth * lmrDepth)))
+                  if (!pos.see_ge(move, Value(-vv * lmrDepth * lmrDepth)))
                       continue;
               }
           }
