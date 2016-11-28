@@ -944,17 +944,25 @@ moves_loop: // When in check search starts from here
                   continue;
 
               // Prune moves with negative SEE
-              if (   lmrDepth < 8
-                  && !pos.see_ge(move, Value(-35 * lmrDepth * lmrDepth)))
-                  continue;
+              if (lmrDepth < 10)
+              {
+                  Value v1 = Value(-(pos.pieces(pos.side_to_move(), QUEEN)?35:30) * lmrDepth * lmrDepth);
+                  Value v2 = Value(-30 * lmrDepth * lmrDepth);
+                  if (!pos.see_ge2(move, v1, v2))
+                      continue;
+              }
           }
-          else if (depth < 7 * ONE_PLY && !extension)
+          else if (depth < 10 * ONE_PLY && !extension)
           {
-              Value v = Value(-35 * depth / ONE_PLY * depth / ONE_PLY);
+              Value v1 = Value(-(pos.pieces(pos.side_to_move(), QUEEN)?35:30) * depth / ONE_PLY * depth / ONE_PLY);
+              Value v2 = Value(-30 * depth / ONE_PLY * depth / ONE_PLY);
               if (ss->staticEval != VALUE_NONE)
-                  v += ss->staticEval - alpha - 200;
+                  {
+                  v1 += ss->staticEval - alpha - 200;
+                  v2 += ss->staticEval - alpha - 200;
+                  }
 
-              if (!pos.see_ge(move, v))
+              if (!pos.see_ge2(move, v1, v2))
                   continue;
           }
       }
