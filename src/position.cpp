@@ -1000,9 +1000,13 @@ Key Position::key_after(Move m) const {
 /// SEE value of move is greater or equal to the given value. We'll use an
 /// algorithm similar to alpha-beta pruning with a null window.
 
-bool Position::see_ge(Move m, Value v) const {
+bool Position::see_ge(Move m, Value v) const {return see_ge2(m, v, v);}
+
+bool Position::see_ge2(Move m, Value v1, Value v2) const {
 
   assert(is_ok(m));
+  
+  Value v = v1;
 
   // Castling moves are implemented as king capturing the rook so cannot be
   // handled correctly. Simply assume the SEE value is VALUE_ZERO that is always
@@ -1034,6 +1038,9 @@ bool Position::see_ge(Move m, Value v) const {
       return true;
 
   balance -= PieceValue[MG][nextVictim];
+  
+  if (nextVictim == QUEEN)
+      v = v2;
 
   if (balance >= v)
       return true;
@@ -1063,8 +1070,16 @@ bool Position::see_ge(Move m, Value v) const {
       if (nextVictim == KING)
           return relativeStm == bool(attackers & pieces(~stm));
 
-      balance += relativeStm ?  PieceValue[MG][nextVictim]
-                             : -PieceValue[MG][nextVictim];
+      if (relativeStm)
+      {
+          balance += PieceValue[MG][nextVictim];
+      }
+      else
+      {
+          balance -= PieceValue[MG][nextVictim];
+          if (nextVictim == QUEEN)
+                v = v2;
+      }
 
       relativeStm = !relativeStm;
 
