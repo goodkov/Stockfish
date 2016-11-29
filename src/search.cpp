@@ -952,7 +952,7 @@ moves_loop: // When in check search starts from here
           {
               Value v = Value(-35 * depth / ONE_PLY * depth / ONE_PLY);
               if (ss->staticEval != VALUE_NONE)
-                  v += ss->staticEval - alpha - 200;
+                  v += beta - alpha - 300;
 
               if (!pos.see_ge(move, v))
                   continue;
