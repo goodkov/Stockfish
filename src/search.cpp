@@ -948,9 +948,10 @@ moves_loop: // When in check search starts from here
                   && !pos.see_ge(move, Value(-35 * lmrDepth * lmrDepth)))
                   continue;
           }
-          else if (depth < 7 * ONE_PLY && !extension)
+          else if (depth < 11 * ONE_PLY && !extension)
           {
-              Value v = Value(-35 * depth / ONE_PLY * depth / ONE_PLY);
+              Value v = Value(-40 * depth / ONE_PLY * depth / ONE_PLY)+30 * depth / ONE_PLY;
+              v = std::min(v, VALUE_ZERO);
               if (ss->staticEval != VALUE_NONE)
                   v += ss->staticEval - alpha - 200;
 
