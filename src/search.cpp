@@ -951,6 +951,7 @@ moves_loop: // When in check search starts from here
           else if (depth < 7 * ONE_PLY && !extension)
           {
               Value v = Value(-35 * depth / ONE_PLY * depth / ONE_PLY);
+               v = std::min(v, Value(-200));
               if (ss->staticEval != VALUE_NONE)
                   v += ss->staticEval - alpha - 200;
 
