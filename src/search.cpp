@@ -945,7 +945,7 @@ moves_loop: // When in check search starts from here
           }
           else if (depth < 7 * ONE_PLY && !extension)
           {
-              Value v = -Value(399 + 35 * depth / ONE_PLY * depth / ONE_PLY);
+              Value v = -Value(399 + 35 * depth / ONE_PLY * depth / ONE_PLY + beta - alpha - 200);
 
               if (PvNode)
                   v += beta - alpha - 1;
