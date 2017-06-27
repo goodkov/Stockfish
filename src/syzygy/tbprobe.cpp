@@ -1,7 +1,7 @@
 /*
   Stockfish, a UCI chess playing engine derived from Glaurung 2.1
   Copyright (c) 2013 Ronald de Man
-  Copyright (C) 2016 Marco Costalba, Lucas Braesch
+  Copyright (C) 2016-2017 Marco Costalba, Lucas Braesch
 
   Stockfish is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -65,10 +65,10 @@ inline Square operator^(Square s, int i) { return Square(int(s) ^ i); }
 // like captures and pawn moves but we can easily recover the correct dtz of the
 // previous move if we know the position's WDL score.
 int dtz_before_zeroing(WDLScore wdl) {
-    return wdl == WDLWin        ?  1   :
-           wdl == WDLCursedWin  ?  101 :
-           wdl == WDLCursedLoss ? -101 :
-           wdl == WDLLoss       ? -1   : 0;
+    return wdl == WDLWin         ?  1   :
+           wdl == WDLCursedWin   ?  101 :
+           wdl == WDLBlessedLoss ? -101 :
+           wdl == WDLLoss        ? -1   : 0;
 }
 
 // Return the sign of a number (-1, 0, 1)
@@ -147,7 +147,7 @@ struct WDLEntryPawn {
 
 struct DTZEntryPiece {
     PairsData* precomp;
-    uint16_t map_idx[4]; // WDLWin, WDLLoss, WDLCursedWin, WDLCursedLoss
+    uint16_t map_idx[4]; // WDLWin, WDLLoss, WDLCursedWin, WDLBlessedLoss
     uint8_t* map;
 };
 
@@ -531,14 +531,14 @@ int decompress_pairs(PairsData* d, uint64_t idx) {
     //
     //       I(k) = k * d->span + d->span / 2      (1)
 
-    // First step is to get the 'k' of the I(k) nearest to our idx, using defintion (1)
+    // First step is to get the 'k' of the I(k) nearest to our idx, using definition (1)
     uint32_t k = idx / d->span;
 
     // Then we read the corresponding SparseIndex[] entry
     uint32_t block = number<uint32_t, LittleEndian>(&d->sparseIndex[k].block);
     int offset     = number<uint16_t, LittleEndian>(&d->sparseIndex[k].offset);
 
-    // Now compute the difference idx - I(k). From defintion of k we know that
+    // Now compute the difference idx - I(k). From definition of k we know that
     //
     //       idx = k * d->span + idx % d->span    (2)
     //
@@ -660,7 +660,7 @@ int map_score(DTZEntry* entry, File f, int value, WDLScore wdl) {
     if (   (wdl == WDLWin  && !(flags & TBFlag::WinPlies))
         || (wdl == WDLLoss && !(flags & TBFlag::LossPlies))
         ||  wdl == WDLCursedWin
-        ||  wdl == WDLCursedLoss)
+        ||  wdl == WDLBlessedLoss)
         value *= 2;
 
     return value + 1;
@@ -673,7 +673,7 @@ int map_score(DTZEntry* entry, File f, int value, WDLScore wdl) {
 //      idx = Binomial[1][s1] + Binomial[2][s2] + ... + Binomial[k][sk]
 //
 template<typename Entry, typename T = typename Ret<Entry>::type>
-T do_probe_table(const Position& pos,  Entry* entry, WDLScore wdl, ProbeState* result) {
+T do_probe_table(const Position& pos, Entry* entry, WDLScore wdl, ProbeState* result) {
 
     const bool IsWDL = std::is_same<Entry, WDLEntry>::value;
 
@@ -978,8 +978,8 @@ uint8_t* set_sizes(PairsData* d, uint8_t* data) {
     d->flags = *data++;
 
     if (d->flags & TBFlag::SingleValue) {
-        d->blocksNum = d->span =
-        d->blockLengthSize = d->sparseIndexSize = 0; // Broken MSVC zero-init
+        d->blocksNum = d->blockLengthSize = 0;
+        d->span = d->sparseIndexSize = 0; // Broken MSVC zero-init
         d->minSymLen = *data++; // Here we store the single value
         return data;
     }
@@ -1107,7 +1107,7 @@ void do_init(Entry& e, T& p, uint8_t* data) {
     for (File f = FILE_A; f <= MaxFile; ++f)
         for (int i = 0; i < Sides; i++) {
             (d = item(p, i, f).precomp)->sparseIndex = (SparseEntry*)data;
-            data += d->sparseIndexSize * sizeof(SparseEntry) ;
+            data += d->sparseIndexSize * sizeof(SparseEntry);
         }
 
     for (File f = FILE_A; f <= MaxFile; ++f)
@@ -1292,7 +1292,7 @@ void Tablebases::init(const std::string& paths) {
             if (MapA1D1D4[s1] == idx && (idx || s1 == SQ_B1)) // SQ_B1 is mapped to 0
             {
                 for (Square s2 = SQ_A1; s2 <= SQ_H8; ++s2)
-                    if ((StepAttacksBB[KING][s1] | s1) & s2)
+                    if ((PseudoAttacks[KING][s1] | s1) & s2)
                         continue; // Illegal position
 
                     else if (!off_A1H8(s1) && off_A1H8(s2) > 0)
@@ -1443,7 +1443,7 @@ int Tablebases::probe_dtz(Position& pos, ProbeState* result) {
         return 0;
 
     if (*result != CHANGE_STM)
-        return (dtz + 100 * (wdl == WDLCursedLoss || wdl == WDLCursedWin)) * sign_of(wdl);
+        return (dtz + 100 * (wdl == WDLBlessedLoss || wdl == WDLCursedWin)) * sign_of(wdl);
 
     // DTZ stores results for the other side, so we need to do a 1-ply search and
     // find the winning move that minimizes DTZ.
@@ -1566,12 +1566,12 @@ bool Tablebases::root_probe(Position& pos, Search::RootMoves& rootMoves, Value& 
 
     // Use 50-move counter to determine whether the root position is
     // won, lost or drawn.
-    int wdl = 0;
+    WDLScore wdl = WDLDraw;
 
     if (dtz > 0)
-        wdl = (dtz + cnt50 <= 100) ? 2 : 1;
+        wdl = (dtz + cnt50 <= 100) ? WDLWin : WDLCursedWin;
     else if (dtz < 0)
-        wdl = (-dtz + cnt50 <= 100) ? -2 : -1;
+        wdl = (-dtz + cnt50 <= 100) ? WDLLoss : WDLBlessedLoss;
 
     // Determine the score to report to the user.
     score = WDL_to_value[wdl + 2];
@@ -1579,9 +1579,9 @@ bool Tablebases::root_probe(Position& pos, Search::RootMoves& rootMoves, Value& 
     // If the position is winning or losing, but too few moves left, adjust the
     // score to show how close it is to winning or losing.
     // NOTE: int(PawnValueEg) is used as scaling factor in score_to_uci().
-    if (wdl == 1 && dtz <= 100)
+    if (wdl == WDLCursedWin && dtz <= 100)
         score = (Value)(((200 - dtz - cnt50) * int(PawnValueEg)) / 200);
-    else if (wdl == -1 && dtz >= -100)
+    else if (wdl == WDLBlessedLoss && dtz >= -100)
         score = -(Value)(((200 + dtz - cnt50) * int(PawnValueEg)) / 200);
 
     // Now be a bit smart about filtering out moves.
