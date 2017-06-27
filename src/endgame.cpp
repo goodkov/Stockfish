@@ -2,7 +2,7 @@
   Stockfish, a UCI chess playing engine derived from Glaurung 2.1
   Copyright (C) 2004-2008 Tord Romstad (Glaurung author)
   Copyright (C) 2008-2015 Marco Costalba, Joona Kiiski, Tord Romstad
-  Copyright (C) 2015-2016 Marco Costalba, Joona Kiiski, Gary Linscott, Tord Romstad
+  Copyright (C) 2015-2017 Marco Costalba, Joona Kiiski, Gary Linscott, Tord Romstad
 
   Stockfish is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -107,14 +107,6 @@ Endgames::Endgames() {
   add<KBPKN>("KBPKN");
   add<KBPPKB>("KBPPKB");
   add<KRPPKRP>("KRPPKRP");
-}
-
-
-template<EndgameType E, typename T>
-void Endgames::add(const string& code) {
-  StateInfo st;
-  map<T>()[Position().set(code, WHITE, &st).material_key()] = std::unique_ptr<EndgameBase<T>>(new Endgame<E>(WHITE));
-  map<T>()[Position().set(code, BLACK, &st).material_key()] = std::unique_ptr<EndgameBase<T>>(new Endgame<E>(BLACK));
 }
 
 
@@ -652,7 +644,7 @@ ScaleFactor Endgame<KBPKB>::operator()(const Position& pos) const {
 
       if (relative_rank(strongSide, pawnSq) <= RANK_5)
           return SCALE_FACTOR_DRAW;
-      
+
       Bitboard path = forward_bb(strongSide, pawnSq);
 
       if (path & pos.pieces(weakSide, KING))
