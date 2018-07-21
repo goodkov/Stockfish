@@ -533,7 +533,7 @@ namespace {
     // Bonus according to the kind of attacking pieces
     if (defended | weak)
     {
-        b = (defended | weak) & (attackedBy[Us][KNIGHT] | attackedBy[Us][BISHOP]);
+        b = weak & (attackedBy[Us][KNIGHT] | attackedBy[Us][BISHOP]);
         while (b)
         {
             Square s = pop_lsb(&b);
