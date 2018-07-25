@@ -309,6 +309,17 @@ namespace {
         if (pos.blockers_for_king(Us) & s)
             b &= LineBB[pos.square<KING>(Us)][s];
 
+        if (Pt == QUEEN)
+        {
+            bb = attacks_bb<  ROOK>(s, pos.pieces() ^ pos.pieces(Us, ROOK))
+               | attacks_bb<BISHOP>(s, pos.pieces() ^ pos.pieces(Us,BISHOP));
+               
+            if (pos.blockers_for_king(Us) & s)
+                bb &= LineBB[pos.square<KING>(Us)][s];
+               
+            attackedBy2[Us] |= attackedBy[Us][ALL_PIECES] & bb;
+        }
+        else
         attackedBy2[Us] |= attackedBy[Us][ALL_PIECES] & b;
         attackedBy[Us][Pt] |= b;
         attackedBy[Us][ALL_PIECES] |= b;
@@ -837,8 +848,8 @@ namespace {
     // Pieces should be evaluated first (populate attack tables)
     score +=  pieces<WHITE, KNIGHT>() - pieces<BLACK, KNIGHT>()
             + pieces<WHITE, BISHOP>() - pieces<BLACK, BISHOP>()
-            + pieces<WHITE, ROOK  >() - pieces<BLACK, ROOK  >()
-            + pieces<WHITE, QUEEN >() - pieces<BLACK, QUEEN >();
+            + pieces<WHITE, ROOK  >() - pieces<BLACK, ROOK  >();
+    score +=  pieces<WHITE, QUEEN >() - pieces<BLACK, QUEEN >();
 
     score += mobility[WHITE] - mobility[BLACK];
 
