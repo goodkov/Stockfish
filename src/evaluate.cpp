@@ -309,7 +309,7 @@ namespace {
         if (pos.blockers_for_king(Us) & s)
             b &= LineBB[pos.square<KING>(Us)][s];
 
-        if (Pt == QUEEN)
+        if (Pt == QUEEN && (attackedBy[Us][ROOK] | attackedBy[Us][BISHOP]) & s)
         {
             bb = attacks_bb<  ROOK>(s, pos.pieces() ^ pos.pieces(Us, ROOK))
                | attacks_bb<BISHOP>(s, pos.pieces() ^ pos.pieces(Us,BISHOP));
