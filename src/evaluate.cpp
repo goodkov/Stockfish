@@ -309,6 +309,18 @@ namespace {
         if (pos.blockers_for_king(Us) & s)
             b &= LineBB[pos.square<KING>(Us)][s];
 
+        if (Pt == QUEEN && b & pos.pieces(Us, ROOK) & PseudoAttacks[ROOK][s]
+                          | b & pos.pieces(Us, BISHOP) & PseudoAttacks[BISHOP][s])
+        {
+            bb = attacks_bb<  ROOK>(s, pos.pieces() ^ pos.pieces(Us, ROOK))
+               | attacks_bb<BISHOP>(s, pos.pieces() ^ pos.pieces(Us,BISHOP));
+               
+            if (pos.blockers_for_king(Us) & s)
+                bb &= LineBB[pos.square<KING>(Us)][s];
+               
+            attackedBy2[Us] |= attackedBy[Us][ALL_PIECES] & bb;
+        }
+        else
         attackedBy2[Us] |= attackedBy[Us][ALL_PIECES] & b;
         attackedBy[Us][Pt] |= b;
         attackedBy[Us][ALL_PIECES] |= b;
