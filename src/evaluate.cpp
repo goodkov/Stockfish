@@ -213,6 +213,8 @@ namespace {
     // possibly via x-ray or by one pawn and one piece. Diagonal x-ray through
     // pawn or squares attacked by 2 pawns are not explicitly added.
     Bitboard attackedBy2[COLOR_NB];
+    
+    Bitboard attackedBy2_[COLOR_NB];
 
     // kingRing[color] are the squares adjacent to the king, plus (only for a
     // king on its first rank) the squares two ranks in front. For instance,
@@ -391,6 +393,14 @@ namespace {
 
         if (Pt == QUEEN)
         {
+            bb = attacks_bb<  ROOK>(s, pos.pieces() ^ pos.pieces(Us, ROOK))
+               | attacks_bb<BISHOP>(s, pos.pieces() ^ pos.pieces(Us,BISHOP));
+               
+            if (pos.blockers_for_king(Us) & s)
+                bb &= LineBB[pos.square<KING>(Us)][s];
+                
+            attackedBy2_[Us] |= attackedBy[Us][ALL_PIECES] & bb;
+        
             // Penalty if any relative pin or discovered attack against the queen
             Bitboard queenPinners;
             if (pos.slider_blockers(pos.pieces(Them, ROOK, BISHOP), s, queenPinners))
@@ -522,7 +532,7 @@ namespace {
     // Squares strongly protected by the enemy, either because they defend the
     // square with a pawn, or because they defend the square twice and we don't.
     stronglyProtected =  attackedBy[Them][PAWN]
-                       | (attackedBy2[Them] & ~attackedBy2[Us]);
+                       | (attackedBy2_[Them] & ~attackedBy2_[Us]);
 
     // Non-pawn enemies, strongly protected
     defended = nonPawnEnemies & stronglyProtected;
@@ -838,8 +848,10 @@ namespace {
     // Pieces should be evaluated first (populate attack tables)
     score +=  pieces<WHITE, KNIGHT>() - pieces<BLACK, KNIGHT>()
             + pieces<WHITE, BISHOP>() - pieces<BLACK, BISHOP>()
-            + pieces<WHITE, ROOK  >() - pieces<BLACK, ROOK  >()
-            + pieces<WHITE, QUEEN >() - pieces<BLACK, QUEEN >();
+            + pieces<WHITE, ROOK  >() - pieces<BLACK, ROOK  >();
+    attackedBy2_[WHITE] = attackedBy2[WHITE];
+    attackedBy2_[BLACK] = attackedBy2[BLACK];
+    score +=  pieces<WHITE, QUEEN >() - pieces<BLACK, QUEEN >();
 
     score += mobility[WHITE] - mobility[BLACK];
 
