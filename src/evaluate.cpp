@@ -565,8 +565,8 @@ namespace {
 
         score += Hanging * popcount(weak & ~attackedBy[Them][ALL_PIECES]);
 
-        b = weak & nonPawnEnemies & attackedBy[Them][ALL_PIECES];
-        score += Overload * popcount(b);
+        b = weak & attackedBy[Them][ALL_PIECES];
+        score += Overload * bool(b);
     }
 
     // Bonus for enemy unopposed weak pawns
